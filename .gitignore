@@ -1,0 +1,13 @@
+# Environments
+.env
+.venv/
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.pyc
+
+# Telethon
+*.session
+*.session-journal
