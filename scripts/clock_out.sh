@@ -1,3 +1,3 @@
 #!/bin/bash
-source .venv/bin/activate
+source ../.venv/bin/activate
 python clock_out.py
