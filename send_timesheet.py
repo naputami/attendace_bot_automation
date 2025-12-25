@@ -1,23 +1,29 @@
 import asyncio
 import gspread
 import os
+from dotenv import load_dotenv
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 from telegram_utils import get_client, get_target_bot
+
 
 # --- Configuration ---
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
+
+load_dotenv()
+
 CREDENTIALS_FILE = 'credentials.json'
-SPREADSHEET_NAME = 'Virgo Timesheet'
+SPREADSHEET_NAME = os.getenv('SPREADSHEET_NAME')
 
 # Column Names (must match exactly what's in the sheet)
-COL_ACTUAL_DATE = 'actual_date'
-COL_PROJECT = 'project'
-COL_TASK = 'task'
-COL_EFF_HOURS = 'eff_hours'
+COL_ACTUAL_DATE = os.getenv('COL_ACTUAL_DATE')
+COL_PROJECT = os.getenv('COL_PROJECT')
+COL_TASK = os.getenv('COL_TASK')
+COL_EFF_HOURS = os.getenv('COL_EFF_HOURS')
+WORKSHEET_TITLE = os.getenv('WORKSHEET_TITLE')
 
 def get_sheet_client():
     """Authenticates and returns the gspread client."""
@@ -35,7 +41,7 @@ def get_todays_tasks():
         gc = get_sheet_client()
         print(f"Opening spreadsheet: '{SPREADSHEET_NAME}'...")
         sh = gc.open(SPREADSHEET_NAME)
-        worksheet = sh.sheet1
+        worksheet = sh.worksheet(WORKSHEET_TITLE)
         
         print("Fetching all records...")
         all_records = worksheet.get_all_records()
@@ -59,6 +65,9 @@ def get_todays_tasks():
 
     except gspread.exceptions.SpreadsheetNotFound:
         print(f"Error: Spreadsheet '{SPREADSHEET_NAME}' not found.")
+        return [], None
+    except gspread.exceptions.WorksheetNotFound:
+        print(f"Error: Worksheet '{WORKSHEET_TITLE}' not found in spreadsheet '{SPREADSHEET_NAME}'.")
         return [], None
     except Exception as e:
         print(f"Error fetching sheet data: {e}")
