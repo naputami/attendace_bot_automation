@@ -11,3 +11,6 @@ __pycache__/
 # Telethon
 *.session
 *.session-journal
+
+# Gspread
+*.json
