@@ -87,13 +87,13 @@ async def send_telegram_messages(tasks):
     
     try:
         for task in tasks:
-            # Format: \ts {project}:{task}:{eff_hours}:{actual_date}
+            # Format: /ts {project}:{task}:{eff_hours}:{actual_date}
             project = task.get(COL_PROJECT, '')
             task_desc = task.get(COL_TASK, '')
             eff_hours = task.get(COL_EFF_HOURS, '')
             actual_date = task.get(COL_ACTUAL_DATE, '')
             
-            message_text = f"\\ts {project}:{task_desc}:{eff_hours}:{actual_date}"
+            message_text = f"/ts {project}:{task_desc}:{eff_hours}:{actual_date}"
             
             print(f"Sending: {message_text}")
             await client.send_message(target_bot, message_text)
