@@ -1,26 +1,30 @@
 # Telegram Attendance & Timesheet Automation
 
-This project automates the process of clocking in, clocking out, and submitting daily timesheets to a specific Telegram bot. It integrates with Google Sheets to fetch daily tasks and reports them automatically.
+This project automates the process of clocking in, clocking out, and submitting daily timesheets to a specific Telegram bot. It integrates with Google Sheets to fetch daily tasks and intelligently skips operations on public holidays.
 
 ## Features
 
-- **Automated Clock In/Out**: Send `/clock_in` and `/clock_out` commands to a target Telegram bot via scripts.
+- **Automated Clock In/Out**: Send `/clock_in` and `/clock_out` commands to a target Telegram bot.
 - **Google Sheets Integration**: Fetches daily tasks from a specified Google Spreadsheet.
 - **Timesheet Submission**: Formats and sends task details (Project, Task Description, Effective Hours) to the Telegram bot.
-- **Configurable**: Uses `.env` for easy configuration of API credentials and sheet settings.
+- **Holiday Awareness**: Automatically checks for Indonesian public holidays (via Google Calendar) and skips actions if today is a holiday.
+- **Robust Logging**: Uses a centralized logging system for better debugging and monitoring.
+- **Modular Design**: Code is organized into jobs and utilities for better maintainability.
 
 ## Prerequisites
 
 - Python 3.7+
 - A Telegram account (to create the API application).
-- A Google Cloud Service Account (for accessing Google Sheets).
+- A Google Cloud Service Account with:
+  - **Google Sheets API** enabled.
+  - **Google Calendar API** enabled.
 
 ## Installation
 
 1.  **Clone the repository:**
     ```bash
     git clone <repository_url>
-    cd virgo_auto
+    cd attendace_bot_automation
     ```
 
 2.  **Create and activate a virtual environment (optional but recommended):**
@@ -64,51 +68,65 @@ COL_EFF_HOURS=Effective Hours
 
 ### 2. Google Credentials
 1.  Create a Service Account in Google Cloud Console.
-2.  Download the JSON key file.
-3.  Rename it to `credentials.json` and place it in the project root directory.
-4.  **Important:** Share your Google Spreadsheet with the `client_email` found in `credentials.json`.
+2.  Enable **Google Sheets API** and **Google Calendar API** for this project.
+3.  Download the JSON key file.
+4.  Rename it to `credentials.json` and place it in the project root directory.
+5.  **Important:** Share your Google Spreadsheet with the `client_email` found in `credentials.json`.
 
 ## Usage
+
+Run the scripts as Python modules from the project root directory.
 
 ### Run Manually
 
 *   **Clock In:**
     ```bash
-    python clock_in.py
+    python -m app.jobs.clock_in
     ```
 
 *   **Clock Out:**
     ```bash
-    python clock_out.py
+    python -m app.jobs.clock_out
     ```
 
 *   **Send Timesheet:**
-    fetches tasks for the *current date* from the spreadsheet and sends them.
+    Fetches tasks for the *current date* from the spreadsheet and sends them.
     ```bash
-    python send_timesheet.py
+    python -m app.jobs.send_timesheet
     ```
 
 ### First Run
 When running the scripts for the first time, Telethon might ask you to login with your phone number and enter the code sent to your Telegram app. This creates a session file (`anon.session`) so subsequent runs won't require manual login.
 
 ### Automation (Shell Scripts)
-The `scripts/` directory contains bash scripts (`clock_in.sh`, `clock_out.sh`, `send_timesheet.sh`) that can be used with `cron` or other schedulers.
+The `shell_scripts/` directory contains bash scripts that are ready to be used with `cron` or other schedulers.
 
-**Note:** You may need to update the paths in these scripts to match your deployment environment.
+**Note:** You may need to update the absolute paths in these scripts to match your deployment environment.
 
-Example `scripts/clock_in.sh`:
+Example `shell_scripts/clock_in.sh`:
 ```bash
 #!/bin/bash
 cd /path/to/your/project
 source .venv/bin/activate
-python clock_in.py
+python -m app.jobs.clock_in
 ```
 
 ## Project Structure
 
-- `clock_in.py`: Script to send the clock-in command.
-- `clock_out.py`: Script to send the clock-out command.
-- `send_timesheet.py`: Main logic for reading sheets and sending reports.
-- `telegram_utils.py`: Helper functions for Telegram client.
-- `requirements.txt`: Python dependencies.
-- `scripts/`: Shell scripts for automation.
+```
+attendace_bot_automation/
+├── app/
+│   ├── jobs/               # Main executable scripts
+│   │   ├── clock_in.py
+│   │   ├── clock_out.py
+│   │   └── send_timesheet.py
+│   └── utils/              # Shared utilities
+│       ├── holiday.py      # Holiday checking logic
+│       ├── logger.py       # Logging configuration
+│       └── telegram.py     # Telegram client helpers
+├── shell_scripts/          # Bash scripts for cron jobs
+├── .env                    # Configuration variables
+├── credentials.json        # Google Service Account Key (ignored in git)
+├── requirements.txt        # Python dependencies
+└── README.md               # Project documentation
+```
