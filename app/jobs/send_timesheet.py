@@ -39,6 +39,39 @@ def get_sheet_client():
     )
     return gspread.authorize(credentials)
 
+def get_all_records_safe(worksheet):
+    values = worksheet.get_all_values()
+    if not values:
+        return []
+
+    headers = [str(h).strip() for h in values[0]]
+    required_headers = [COL_ACTUAL_DATE, COL_PROJECT, COL_TASK, COL_EFF_HOURS]
+    required_headers = [h for h in required_headers if h]
+
+    header_indexes = {}
+    missing = []
+    for header_name in required_headers:
+        try:
+            header_indexes[header_name] = headers.index(header_name)
+        except ValueError:
+            missing.append(header_name)
+
+    if missing:
+        logger.error(f"Missing required headers in worksheet: {missing}")
+        return []
+
+    records = []
+    for row_values in values[1:]:
+        if not any(str(v).strip() for v in row_values):
+            continue
+
+        row = {}
+        for header_name, idx in header_indexes.items():
+            row[header_name] = row_values[idx] if idx < len(row_values) else ''
+        records.append(row)
+
+    return records
+
 def get_todays_tasks():
     """Fetches tasks from the spreadsheet where actual_date is today."""
     try:
@@ -48,7 +81,7 @@ def get_todays_tasks():
         worksheet = sh.worksheet(WORKSHEET_TITLE)
         
         logger.info("Fetching all records...")
-        all_records = worksheet.get_all_records()
+        all_records = get_all_records_safe(worksheet)
         
         # Determine today's date format
         # Adjust this format if your spreadsheet uses something else (e.g., "%d/%m/%Y")
